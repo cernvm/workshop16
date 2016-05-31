@@ -1,0 +1,292 @@
+fedora/23-cloud-base
+  vagrant up
+  vagrant ssh
+  sudo dnf install https://ecsft.cern.ch/dist/cvmfs/cvmfs-2.2.3/cvmfs-2.2.3-1.fc23.x86_64.rpm https://ecsft.cern.ch/dist/cvmfs/cvmfs-2.2.3/cvmfs-server-2.2.3-1.fc23.x86_64.rpm https://ecsft.cern.ch/dist/cvmfs/cvmfs-config/cvmfs-config-default-latest.noarch.rpm
+
+  sudo systemctl start httpd
+  sudo systemctl enable httpd
+  sudo cvmfs_server mkfs -o vagrant ws16.cern.ch
+  sudo cvmfs_server update-info
+
+  cvmfs_server update-repoinfo ws16.cern.ch
+  
+
+  sudo dnf install wget gcc
+  wget https://ecsft.cern.ch/dist/ws16/vitetris-0.57.tar.gz
+  tar xvf vitetris-0.57.tar.gz
+  cd vitetris-0.57
+  ./configure --prefix=/cvmfs/ws16.cern.ch/platforms/fedora23
+  make -j4
+
+  sudo vi /etc/cvmfs/repositories.d/ws16.cern.ch/server.conf
+    —> auto tag = false
+  cvmfs_server transaction ws16.cern.ch
+  make -j4 install
+  echo ‘/platforms/*’ > /cvmfs/ws16.cern.ch/.cvmfsdirtab
+  cvmfs_server publish -a v0.57 ws16.cern.ch
+  cvmfs_server tag
+  cvmfs_server check
+
+
+  sudo dnf install mod_wsgi
+  sudo systemctl restart httpd  # WHY
+  sudo curl -o /etc/cvmfs/keys/cvmws16.cern.ch.pub https://ecsft.cern.ch/dist/ws16/cvmws16.cern.ch.pub
+  sudo cvmfs_server add-replica -o vagrant  http://cernvm-webfs.cern.ch/cvmfs/cvmws16.cern.ch /etc/cvmfs/keys/cvmws16.cern.ch.pub
+
+  sudo mkdir /var/log/cvmfs 
+  sudo chown vagrant /var/log/cvmfs
+  sudo vi /etc/logrotate.d/cvmfs
+/var/log/cvmfs/*.log {
+    weekly
+    missingok
+    notifempty
+}
+  cvmfs_server snapshot -a
+  cat /var/log/cvmfs/snapshots.log
+
+  cvmfs_server list
+  cvmfs_server check cvmws16.cern.ch
+  exit
+vagrant destroy
+
+
+vagrant init ubuntu/xenial64
+vagrant up
+vagrant ssh
+  wget https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest_all.deb
+  sudo dpkg -i cvmfs-release-latest_all.deb
+  rm -f cvmfs-release-latest_all.deb
+  sudo apt-get update
+
+  sudo apt-get install cvmfs cvmfs-server
+  sudo vi /etc/hosts: add ubuntu-xenial
+  sudo systemctl start apache2
+  sudo systemctl enable apache2
+  sudo cvmfs_server mkfs -o ubuntu ws16.cern.ch
+  sudo cvmfs_server update-info
+
+  cvmfs_server update-repoinfo ws16.cern.ch
+  
+
+  sudo dnf install gcc make
+  wget https://ecsft.cern.ch/dist/ws16/vitetris-0.57.tar.gz
+  tar xvf vitetris-0.57.tar.gz
+  cd vitetris-0.57
+  ./configure --prefix=/cvmfs/ws16.cern.ch/platforms/ubuntu1604
+  make -j4
+
+  sudo vi /etc/cvmfs/repositories.d/ws16.cern.ch/server.conf
+    —> auto tag = false
+  cvmfs_server transaction ws16.cern.ch
+  make -j4 install
+  echo ‘/platforms/*’ > /cvmfs/ws16.cern.ch/.cvmfsdirtab
+  cvmfs_server publish -a v0.57 ws16.cern.ch
+  cvmfs_server tag
+  cvmfs_server check
+
+
+  sudo apt-get install libapache2-mod-wsgi
+  sudo systemctl restart httpd  # WHY
+  sudo curl -o /etc/cvmfs/keys/cvmws16.cern.ch.pub https://ecsft.cern.ch/dist/ws16/cvmws16.cern.ch.pub
+  sudo cvmfs_server add-replica -o ubuntu  http://cernvm-webfs.cern.ch/cvmfs/cvmws16.cern.ch /etc/cvmfs/keys/cvmws16.cern.ch.pub
+
+  sudo mkdir /var/log/cvmfs 
+  sudo chown ubuntu /var/log/cvmfs
+  sudo vi /etc/logrotate.d/cvmfs
+/var/log/cvmfs/*.log {
+    weekly
+    missingok
+    notifempty
+}
+  cvmfs_server snapshot -a
+  cat /var/log/cvmfs/snapshots.log
+
+  cvmfs_server list
+  cvmfs_server check cvmws16.cern.ch
+  exit
+vagrant destroy
+
+
+vagrant init cernvm/4-preview
+vagrant up
+vagrant ssh
+  sudo mkdir /mnt/.rw/scratch
+  sudo ln -s /mnt/.rw/scratch /var/spool/cvmfs
+  sudo systemctl stop autofs
+  sudo systemctl disable autofs
+  sudo systemctl start httpd
+  sudo systemctl enable httpd
+
+  sudo cvmfs_server mkfs -o vagrant ws16.cern.ch
+  sudo cvmfs_server update-info
+
+  cvmfs_server update-repoinfo ws16.cern.ch
+  
+  wget https://ecsft.cern.ch/dist/ws16/vitetris-0.57.tar.gz
+  tar xvf vitetris-0.57.tar.gz
+  cd vitetris-0.57
+  ./configure --prefix=/cvmfs/ws16.cern.ch/platforms/cvm4
+  make -j4
+
+  sudo vi /etc/cvmfs/repositories.d/ws16.cern.ch/server.conf
+    —> auto tag = false
+  cvmfs_server transaction ws16.cern.ch
+  make -j4 install
+  echo '/platforms/*' > /cvmfs/ws16.cern.ch/.cvmfsdirtab
+  cvmfs_server publish -a v0.57 ws16.cern.ch
+  cvmfs_server tag
+  cvmfs_server check
+
+  sudo curl -o /etc/cvmfs/keys/cvmws16.cern.ch.pub https://ecsft.cern.ch/dist/ws16/cvmws16.cern.ch.pub
+  sudo cvmfs_server add-replica -o vagrant  http://cernvm-webfs.cern.ch/cvmfs/cvmws16.cern.ch /etc/cvmfs/keys/cvmws16.cern.ch.pub
+
+  sudo mkdir /var/log/cvmfs 
+  sudo chown vagrant /var/log/cvmfs
+  sudo vi /etc/logrotate.d/cvmfs
+/var/log/cvmfs/*.log {
+    weekly
+    missingok
+    notifempty
+}
+  cvmfs_server snapshot -a
+  cat /var/log/cvmfs/snapshots.log
+
+  cvmfs_server list
+  cvmfs_server check cvmws16.cern.ch
+  exit
+vagrant destroy
+
+
+
+vagrant init geerlingguy/centos7
+vagrant up
+vagrant ssh
+  sudo yum install https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
+  sudo yum install cvmfs cvmfs-server
+  
+  sudo yum install http://www.elrepo.org/elrepo-release-7.0-2.el7.elrepo.noarch.rpm
+  sudo vi /etc/yum.repos.d/elrepo.repo [enable elrepo-kernel]
+  sudo yum install kernel-lt
+  sudo vi /etc/yum.conf
+    exclude=kernel
+
+  sudo egrep ^menuentry /etc/grub2.cfg | cut -f 2 -d \'
+  sudo grub2-set-default 0
+  sudo reboot
+vagrant ssh
+  uname -a
+  sudo systemctl start httpd
+  sudo systemctl enable httpd
+
+  sudo cvmfs_server mkfs -o vagrant ws16.cern.ch
+  sudo cvmfs_server update-info
+
+  cvmfs_server update-repoinfo ws16.cern.ch
+  
+  sudo yum install gcc
+  wget https://ecsft.cern.ch/dist/ws16/vitetris-0.57.tar.gz
+  tar xvf vitetris-0.57.tar.gz
+  cd vitetris-0.57
+  ./configure --prefix=/cvmfs/ws16.cern.ch/platforms/centos7
+  make -j4
+
+  sudo vi /etc/cvmfs/repositories.d/ws16.cern.ch/server.conf
+    —> auto tag = false
+  cvmfs_server transaction ws16.cern.ch
+  make -j4 install
+  echo '/platforms/*' > /cvmfs/ws16.cern.ch/.cvmfsdirtab
+  cvmfs_server publish -a v0.57 ws16.cern.ch
+  cvmfs_server tag
+  cvmfs_server check
+
+  sudo yum install mod_wsgi
+  sudo curl -o /etc/cvmfs/keys/cvmws16.cern.ch.pub https://ecsft.cern.ch/dist/ws16/cvmws16.cern.ch.pub
+  sudo cvmfs_server add-replica -o vagrant  http://cernvm-webfs.cern.ch/cvmfs/cvmws16.cern.ch /etc/cvmfs/keys/cvmws16.cern.ch.pub
+
+  sudo mkdir /var/log/cvmfs 
+  sudo chown vagrant /var/log/cvmfs
+  sudo vi /etc/logrotate.d/cvmfs
+/var/log/cvmfs/*.log {
+    weekly
+    missingok
+    notifempty
+}
+  cvmfs_server snapshot -a
+  cat /var/log/cvmfs/snapshots.log
+
+  cvmfs_server list
+  cvmfs_server check cvmws16.cern.ch
+  exit
+vagrant destroy
+
+
+vagrant init bytepark/scientific-6.5-64
+vagrant up
+vagrant ssh
+  export LANG=
+
+  sudo yum install https://dl.fedoraproject.org/pub/epel/epel-release-latest-6.noarch.rpm
+  sudo yum install https://ecsft.cern.ch/dist/cvmfs/cvmfs-release/cvmfs-release-latest.noarch.rpm
+  sudo yum install cvmfs cvmfs-server
+  
+  sudo yum update kernel
+  sudo yum --disablerepo=* --enablerepo=cernvm-kernel install kernel
+  sudo yum --enablerepo=cernvm-kernel install aufs2-util
+  
+  sudo reboot
+vagrant ssh
+  export LANG=
+  uname -a
+  sudo service httpd start
+  sudo chkconfig httpd on
+
+  sudo cvmfs_server mkfs -o vagrant ws16.cern.ch
+  sudo cvmfs_server update-info
+
+  cvmfs_server update-repoinfo ws16.cern.ch
+  cvmfs_swissknife info -r http://localhost/cvmfs/ws16.cern.ch -M
+  
+  wget https://ecsft.cern.ch/dist/ws16/vitetris-0.57.tar.gz
+  tar xvf vitetris-0.57.tar.gz
+  cd vitetris-0.57
+  ./configure --prefix=/cvmfs/ws16.cern.ch/platforms/sl6
+  make -j4
+
+  sudo vi /etc/cvmfs/repositories.d/ws16.cern.ch/server.conf
+    —> auto tag = false
+  cvmfs_server transaction ws16.cern.ch
+  make -j4 install
+  echo '/platforms/*' > /cvmfs/ws16.cern.ch/.cvmfsdirtab
+  cvmfs_server publish -a v0.57 ws16.cern.ch
+  cvmfs_server tag
+  cvmfs_server check
+
+  sudo yum install mod_wsgi
+  sudo service httpd restart  # WHY
+  sudo curl -o /etc/cvmfs/keys/cvmws16.cern.ch.pub https://ecsft.cern.ch/dist/ws16/cvmws16.cern.ch.pub
+  sudo cvmfs_server add-replica -o vagrant  http://cernvm-webfs.cern.ch/cvmfs/cvmws16.cern.ch /etc/cvmfs/keys/cvmws16.cern.ch.pub
+
+  sudo mkdir /var/log/cvmfs 
+  sudo chown vagrant /var/log/cvmfs
+  sudo vi /etc/logrotate.d/cvmfs
+/var/log/cvmfs/*.log {
+    weekly
+    missingok
+    notifempty
+}
+  cvmfs_server snapshot -a
+  cat /var/log/cvmfs/snapshots.log
+
+  cvmfs_server list
+  cvmfs_server check cvmws16.cern.ch
+  exit
+vagrant destroy
+  
+
+  
+  
+  
+
+  
+  
+  
