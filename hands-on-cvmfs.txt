@@ -110,8 +110,6 @@ vagrant destroy
 vagrant init cernvm/4-preview
 vagrant up
 vagrant ssh
-  sudo mkdir /mnt/.rw/scratch
-  sudo ln -s /mnt/.rw/scratch /var/spool/cvmfs
   sudo systemctl stop autofs
   sudo systemctl disable autofs
   sudo systemctl start httpd
